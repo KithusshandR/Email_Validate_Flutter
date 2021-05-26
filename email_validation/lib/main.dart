@@ -1,6 +1,54 @@
+
+
+import 'dart:convert';
 import 'package:email_validation/signup.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+
+Future<Album> createAlbum(String email, String password) async {
+  final response = await http.post(
+    Uri.parse('http://admin.knotsparadis.com/api/login'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'email': email,
+      'password': password
+     
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    // If the server did return a 201 CREATED response,
+    // then parse the JSON.
+    print(jsonDecode(response.body));
+    return Album.fromJson(jsonDecode(response.body));
+  } else {
+    // If the server did not return a 201 CREATED response,
+    // then throw an exception.
+   //throw Exception('Failed to create album.');
+  }
+   
+}
+
+class Album {
+  final String email;
+  final String password;
+
+
+  Album({ this.email, this.password});
+
+  factory Album.fromJson(Map<String, dynamic> json) {
+    return Album(
+      email: json['email'],
+      password: json['password']
+    );
+  }
+}
+
 
 void main() {
   runApp(MyApp());
@@ -24,11 +72,18 @@ class MyApp extends StatelessWidget {
 }
 
 class SignIn extends StatefulWidget {
+
+
+
+  
   @override
   _FormPageState createState() => new _FormPageState();
 }
 
 class _FormPageState extends State<SignIn> {
+
+   Future<Album> _futureAlbum;
+
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   final formKey = new GlobalKey<FormState>();
 
@@ -71,6 +126,7 @@ class _FormPageState extends State<SignIn> {
         key: scaffoldKey,
         body: new Form(
           key: formKey,
+
           child: new Column(
             children: <Widget>[
               SizedBox(
@@ -122,6 +178,7 @@ class _FormPageState extends State<SignIn> {
                 margin: const EdgeInsets.only(left: 20.0, right: 20.0),
                 width: 380.0,
                 child: new TextFormField(
+                  
                            cursorColor: Colors.red,
                   decoration: new InputDecoration(
                       contentPadding: new EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -214,7 +271,11 @@ class _FormPageState extends State<SignIn> {
                       height: 60.0,
                       buttonColor: Colors.red[900],
                       child: RaisedButton(
-                        onPressed: _submit,
+                            onPressed: () {
+                                _submit();
+                                this._futureAlbum = createAlbum(_email,_password);
+    
+                            },
                         child: Text(
                           'Sign In',
                           style: TextStyle(color: Colors.white, fontSize: 22),
@@ -321,4 +382,10 @@ class _FormPageState extends State<SignIn> {
           ),
         ));
   }
+
+
+
+  
 }
+
+

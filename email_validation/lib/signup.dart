@@ -1,7 +1,51 @@
 
+import 'dart:convert';
+
 import 'package:email_validation/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+Future<Album> createAlbumRegister(String email, String password) async {
+  final response = await http.post(
+    Uri.parse('http://admin.knotsparadis.com/api/register'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'name': 'Kithu',
+      'email': email,
+      'password': password
+     
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    // If the server did return a 201 CREATED response,
+    // then parse the JSON.
+    print(jsonDecode(response.body));
+    return Album.fromJson(jsonDecode(response.body));
+  } else {
+    // If the server did not return a 201 CREATED response,
+    // then throw an exception.
+   //throw Exception('Failed to create album.');
+  }
+   
+}
+class Album {
+  final String email;
+  final String password;
+
+
+  Album({ this.email, this.password});
+
+  factory Album.fromJson(Map<String, dynamic> json) {
+    return Album(
+      email: json['email'],
+      password: json['password']
+    );
+  }
+}
 
 
 class SignUp extends StatefulWidget {
@@ -10,6 +54,9 @@ class SignUp extends StatefulWidget {
 }
 
 class _FormPageState extends State<SignUp> {
+  
+   Future<Album> _futureAlbum;
+
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   final formKey = new GlobalKey<FormState>();
   final TextEditingController _user = TextEditingController();
@@ -93,7 +140,7 @@ class _FormPageState extends State<SignUp> {
                 alignment: Alignment.topLeft,
                 width: 380.0,
                 child: Text(
-                  'Email/ User Name',
+                  'Email',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     color: Colors.black,
@@ -221,7 +268,11 @@ class _FormPageState extends State<SignUp> {
                       height: 50.0,
                       buttonColor: Colors.red[900],
                       child: RaisedButton(
-                        onPressed: _submit,
+                           onPressed: () {
+                                _submit();
+                                this._futureAlbum = createAlbumRegister(_email, _password);
+    
+                            },
                         child: Text(
                           'Sign up',
                           style: TextStyle(color: Colors.white, fontSize: 18),
